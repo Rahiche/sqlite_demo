@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sqlite_demo/BLOCS/DatabaseBloc.dart';
 import 'package:sqlite_demo/ClientModel.dart';
-import 'package:sqlite_demo/Database.dart';
+
 import 'dart:math' as math;
 
 void main() => runApp(MaterialApp(home: MyApp()));
@@ -18,12 +19,20 @@ class _MyAppState extends State<MyApp> {
     Client(firstName: "oussama", lastName: "ali", blocked: false),
   ];
 
+  final bloc = ClientsBloc();
+
+  @override
+  void dispose() {
+    bloc.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Flutter SQLite")),
-      body: FutureBuilder<List<Client>>(
-        future: DBProvider.db.getAllClients(),
+      body: StreamBuilder<List<Client>>(
+        stream: bloc.clients,
         builder: (BuildContext context, AsyncSnapshot<List<Client>> snapshot) {
           if (snapshot.hasData) {
             return ListView.builder(
@@ -34,15 +43,14 @@ class _MyAppState extends State<MyApp> {
                   key: UniqueKey(),
                   background: Container(color: Colors.red),
                   onDismissed: (direction) {
-                    DBProvider.db.deleteClient(item.id);
+                    bloc.delete(item.id);
                   },
                   child: ListTile(
                     title: Text(item.lastName),
                     leading: Text(item.id.toString()),
                     trailing: Checkbox(
                       onChanged: (bool value) {
-                        DBProvider.db.blockOrUnblock(item);
-                        setState(() {});
+                        bloc.blockUnblock(item);
                       },
                       value: item.blocked,
                     ),
@@ -59,8 +67,7 @@ class _MyAppState extends State<MyApp> {
         child: Icon(Icons.add),
         onPressed: () async {
           Client rnd = testClients[math.Random().nextInt(testClients.length)];
-          await DBProvider.db.newClient(rnd);
-          setState(() {});
+          bloc.add(rnd);
         },
       ),
     );
