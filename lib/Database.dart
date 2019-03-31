@@ -99,6 +99,6 @@ class DBProvider {
 
   deleteAll() async {
     final db = await database;
-    db.rawDelete("Delete * from Clinet");
+    db.rawDelete("Delete * from Client");
   }
 }
